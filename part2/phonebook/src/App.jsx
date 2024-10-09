@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import personsService from './services/persons'
 
 import Filter from './components/Filter.jsx'
 import PersonForm from './components/PersonForm.jsx'
@@ -19,22 +19,37 @@ const App = () => {
 		}
 
 		if (persons.some(person => person.name === nameObject.name)) {
-			alert(`${newName} is already in the phonebook`)
+			const personToUpdate = persons.find(person => person.name === nameObject.name)
+
+			confirm(`${nameObject.name} already exists. Do you want to update the phone number?`) &&
+				personsService.updatePerson(personToUpdate.id, nameObject).then(res => {
+					setPersons(persons.map(person => (person.name === nameObject.name ? nameObject : person)))
+					setNewName('')
+					setNewNumber('')
+				})
 			return
 		}
 
-		setPersons(persons.concat(nameObject))
-		setNewName('')
-		setNewNumber('')
+		personsService.createPerson(nameObject).then(res => {
+			setPersons(persons.concat(nameObject))
+			setNewName('')
+			setNewNumber('')
+		})
+	}
+
+	const deletePerson = id => {
+		if (confirm('Are you sure you want to delete this person?')) {
+			personsService.destroyPerson(id).then(res => {
+				setPersons(persons.filter(person => person.id !== id))
+			})
+		}
 	}
 
 	const filterPersons = persons.filter(person => person.name.toLowerCase().includes(searchName.toLowerCase()))
 
 	useEffect(() => {
-		axios.get('http://localhost:3001/persons').then(res => {
-			setPersons(res.data)
-		})
-	}, [])
+		personsService.getAll().then(initialPersons => setPersons(initialPersons))
+	}, [persons])
 
 	return (
 		<div>
@@ -49,7 +64,7 @@ const App = () => {
 				addNewName={addNewName}
 			/>
 			<h3>Numbers</h3>
-			<Persons persons={filterPersons} />
+			<Persons persons={filterPersons} onDelete={deletePerson} />
 		</div>
 	)
 }
