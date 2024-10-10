@@ -4,12 +4,15 @@ import personsService from './services/persons'
 import Filter from './components/Filter.jsx'
 import PersonForm from './components/PersonForm.jsx'
 import Persons from './components/Persons.jsx'
+import Notification from './components/Notification.jsx'
 
 const App = () => {
 	const [persons, setPersons] = useState([,])
 	const [newName, setNewName] = useState('')
 	const [newNumber, setNewNumber] = useState('')
 	const [searchName, setSearchName] = useState('')
+	const [notification, setNotification] = useState(null)
+	const [notificationStatus, setNotificationStatus] = useState('success')
 
 	const addNewName = e => {
 		e.preventDefault()
@@ -22,11 +25,17 @@ const App = () => {
 			const personToUpdate = persons.find(person => person.name === nameObject.name)
 
 			confirm(`${nameObject.name} already exists. Do you want to update the phone number?`) &&
-				personsService.updatePerson(personToUpdate.id, nameObject).then(res => {
-					setPersons(persons.map(person => (person.name === nameObject.name ? nameObject : person)))
-					setNewName('')
-					setNewNumber('')
-				})
+				personsService
+					.updatePerson(personToUpdate.id, nameObject)
+					.then(res => {
+						setPersons(persons.map(person => (person.name === nameObject.name ? nameObject : person)))
+						setNewName('')
+						setNewNumber('')
+					})
+					.catch(() => {
+						setNotificationStatus('error'),
+							setNotification(`Information of ${nameObject.name} has been removed from server`)
+					})
 			return
 		}
 
@@ -34,6 +43,8 @@ const App = () => {
 			setPersons(persons.concat(nameObject))
 			setNewName('')
 			setNewNumber('')
+
+			setNotification(`Added ${nameObject.name}`)
 		})
 	}
 
@@ -41,6 +52,7 @@ const App = () => {
 		if (confirm('Are you sure you want to delete this person?')) {
 			personsService.destroyPerson(id).then(res => {
 				setPersons(persons.filter(person => person.id !== id))
+				setNotification('Sucessfully deleted')
 			})
 		}
 	}
@@ -54,6 +66,7 @@ const App = () => {
 	return (
 		<div>
 			<h2>Phonebook</h2>
+			<Notification message={notification} status={notificationStatus} />
 			<Filter searchName={searchName} setSearchName={setSearchName} />
 			<h3>add a new</h3>
 			<PersonForm
