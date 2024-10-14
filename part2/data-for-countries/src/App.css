@@ -1,0 +1,14 @@
+.country__name{
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap:10px
+}
+
+.hide{
+    display: none;
+}
+
+.active{
+    display:block
+}
